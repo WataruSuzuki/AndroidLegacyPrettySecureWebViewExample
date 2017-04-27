@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.TextView;
 
@@ -39,6 +40,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mWebView = (WebView) findViewById(R.id.webview);
+        mWebView.getSettings().setJavaScriptEnabled(true);
+        mWebView.addJavascriptInterface(new InSecureWebAppInterface(), "TEST");
+        mWebView.loadUrl("http://api.ma.la/androidwebview/");
     }
 
+    private class InSecureWebAppInterface {
+        @JavascriptInterface
+        public void onClick() {
+
+        }
+    }
 }
