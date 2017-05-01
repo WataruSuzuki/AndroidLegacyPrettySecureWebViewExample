@@ -1,13 +1,20 @@
 package com.devjchankchan.androidwebviewexample;
 
+import android.graphics.Bitmap;
+import android.net.http.SslError;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.webkit.JavascriptInterface;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.widget.TextView;
+import android.webkit.WebViewClient;
 
 public class MainActivity extends AppCompatActivity {
 
