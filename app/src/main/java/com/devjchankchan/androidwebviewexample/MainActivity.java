@@ -55,6 +55,23 @@ public class MainActivity extends AppCompatActivity {
     private class InSecureWebAppInterface {
         @JavascriptInterface
         public void onClick() {
+    /*
+     http://yuki312.blogspot.jp/2011/11/blog-post.html
+     */
+    private static void dbg(String msg) {
+        StackTraceElement[] stack = new Throwable().getStackTrace();
+        String className = stack[1].getClassName();
+        String method = stack[1].getMethodName();
+        int line = stack[1].getLineNumber();
+        StringBuilder buf = new StringBuilder(60);
+        buf.append(msg)
+                .append("[")
+                // sample.package.ClassName.methodName:1234
+                .append(className).append(".").append(method).append(":").append(line)
+                .append("]");
+        android.util.Log.d("AndroidWebViewExample", buf.toString());
+    }
+
 
         }
     }
