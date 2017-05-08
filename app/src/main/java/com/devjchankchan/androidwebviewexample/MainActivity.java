@@ -25,17 +25,19 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-//            switch (item.getItemId()) {
-//                case R.id.navigation_home:
-//                    mTextMessage.setText(R.string.title_home);
-//                    return true;
-//                case R.id.navigation_dashboard:
-//                    mTextMessage.setText(R.string.title_dashboard);
-//                    return true;
-//                case R.id.navigation_notifications:
-//                    mTextMessage.setText(R.string.title_notifications);
-//                    return true;
-//            }
+
+            switch (item.getItemId()) {
+                case R.id.navigation_secure:
+                    setupWebView(SelectedType.SECURE_INTERFACE);
+                    break;
+                case R.id.navigation_insecure:
+                    setupWebView(SelectedType.INSECURE_INTERFACE);
+                    break;
+                case R.id.navigation_no_javascript:
+                    setupWebView(SelectedType.NO_JAVASCRIPT);
+                    break;
+            }
+
             return false;
         }
 
@@ -55,6 +57,12 @@ public class MainActivity extends AppCompatActivity {
     private class InSecureWebAppInterface {
         @JavascriptInterface
         public void onClick() {
+    private enum SelectedType {
+        SECURE_INTERFACE,
+        INSECURE_INTERFACE,
+        NO_JAVASCRIPT
+    }
+
     /*
      http://yuki312.blogspot.jp/2011/11/blog-post.html
      */
