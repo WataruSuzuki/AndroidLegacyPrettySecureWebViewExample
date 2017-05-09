@@ -19,6 +19,12 @@ import android.webkit.WebViewClient;
 public class MainActivity extends AppCompatActivity {
 
     private WebView mWebView;
+    private String myRequestUrl = "http://api.ma.la/androidwebview/";
+    private final String[] incidentsFuncList = {
+            "setAccessible()",
+            "ClassLoader", "getClass()", "getClassLoader()", "loadClass()",
+            "Context", "getContext()", "getApplicationContext()", "getBaseContext()"
+    };
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
