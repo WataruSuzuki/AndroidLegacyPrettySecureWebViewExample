@@ -86,7 +86,55 @@ public class MainActivity extends AppCompatActivity {
         android.util.Log.d("AndroidWebViewExample", buf.toString());
     }
 
+    private class MyWebViewClient extends WebViewClient {
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            dbg("(・A・)!!");
+            handler.cancel();
+        }
 
+        @Override
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            super.onPageStarted(view, url, favicon);
+            removeInsidents(view);
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            removeInsidents(view);
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if (checkUrl(request.getUrl().toString())) {
+                return super.shouldOverrideUrlLoading(view, request);
+            } else {
+                dbg("(・A・)!!");
+                return true;
+            }
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (checkUrl(url.toString())) {
+                return super.shouldOverrideUrlLoading(view, url);
+            } else {
+                dbg("(・A・)!!");
+                return true;
+            }
+        }
+
+        private void removeInsidents(WebView webView) {
+            for (String insidentsFuncStr:
+                    incidentsFuncList) {
+                webView.removeJavascriptInterface(insidentsFuncStr);
+            }
+        }
+
+        private boolean checkUrl(String urlStr) {
+            return myRequestUrl.startsWith(urlStr);
         }
     }
 }
