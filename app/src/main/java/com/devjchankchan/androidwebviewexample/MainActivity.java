@@ -54,15 +54,40 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mWebView = (WebView) findViewById(R.id.webview);
-        mWebView.getSettings().setJavaScriptEnabled(true);
-        mWebView.addJavascriptInterface(new InSecureWebAppInterface(), "TEST");
-        mWebView.loadUrl("http://api.ma.la/androidwebview/");
+        setupWebView(SelectedType.SECURE_INTERFACE);
     }
 
-    private class InSecureWebAppInterface {
+    private void setupWebView(SelectedType type) {
+        mWebView = (WebView) findViewById(R.id.webview);
+        mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+        mWebView.clearCache(true);
+
+        switch (type) {
+            case SECURE_INTERFACE:
+                setupSecureWebView();
+                //Do not break here!
+
+            case INSECURE_INTERFACE:
+                mWebView.setWebViewClient(null);
+                mWebView.addJavascriptInterface(new MyWebAppInterface(), "TEST");
+                mWebView.getSettings().setJavaScriptEnabled(true);
+                break;
+
+            default:
+                mWebView.getSettings().setJavaScriptEnabled(false);
+        }
+        mWebView.loadUrl("https://www.google.co.jp");
+    }
+
+    private void setupSecureWebView() {
+        mWebView.setWebViewClient(new MyWebViewClient());
+    }
+
+    private class MyWebAppInterface {
         @JavascriptInterface
-        public void onClick() {
+        public void onClick() {}
+    }
+
     private enum SelectedType {
         SECURE_INTERFACE,
         INSECURE_INTERFACE,
