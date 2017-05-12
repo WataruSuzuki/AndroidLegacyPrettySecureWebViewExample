@@ -19,8 +19,11 @@ import android.webkit.WebViewClient;
 public class MainActivity extends AppCompatActivity {
 
     private WebView mWebView;
-    private String myRequestUrl = "http://api.ma.la/androidwebview/";
+    private final String myRequestUrl = "http://api.ma.la/androidwebview/";
+    private final String checkUrl = "https://www.google.co.jp";
+    private final String interfaceName = "MyWebAppInterface";
     private final String[] incidentsFuncList = {
+            "searchBoxJavaBridge_",
             "setAccessible()",
             "ClassLoader", "getClass()", "getClassLoader()", "loadClass()",
             "Context", "getContext()", "getApplicationContext()", "getBaseContext()"
@@ -32,15 +35,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
+            mWebView.loadUrl("about:blank");
             switch (item.getItemId()) {
                 case R.id.navigation_secure:
-                    setupWebView(SelectedType.SECURE_INTERFACE);
+                    setupWebView(SelectedType.STATUS_SECURE);
                     break;
                 case R.id.navigation_insecure:
-                    setupWebView(SelectedType.INSECURE_INTERFACE);
+                    setupWebView(SelectedType.STATUS_INSECURE);
                     break;
                 case R.id.navigation_no_javascript:
-                    setupWebView(SelectedType.NO_JAVASCRIPT);
+                    setupWebView(SelectedType.STATUS_NO_JAVASCRIPT);
                     break;
             }
 
@@ -54,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        setupWebView(SelectedType.SECURE_INTERFACE);
+        setupWebView(SelectedType.STATUS_SECURE);
     }
 
     private void setupWebView(SelectedType type) {
@@ -62,25 +66,33 @@ public class MainActivity extends AppCompatActivity {
         mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
         mWebView.clearCache(true);
 
+        mWebView.addJavascriptInterface(new MyWebAppInterface(), interfaceName);
+        mWebView.getSettings().setJavaScriptEnabled(true);
         switch (type) {
-            case SECURE_INTERFACE:
+            case STATUS_SECURE:
                 setupSecureWebView();
-                //Do not break here!
+                break;
 
-            case INSECURE_INTERFACE:
+            case STATUS_INSECURE:
                 mWebView.setWebViewClient(null);
-                mWebView.addJavascriptInterface(new MyWebAppInterface(), "TEST");
-                mWebView.getSettings().setJavaScriptEnabled(true);
                 break;
 
             default:
                 mWebView.getSettings().setJavaScriptEnabled(false);
         }
-        mWebView.loadUrl("https://www.google.co.jp");
+        mWebView.loadUrl(myRequestUrl);
     }
 
     private void setupSecureWebView() {
+        removeInsidents(mWebView);
         mWebView.setWebViewClient(new MyWebViewClient());
+    }
+
+    private void removeInsidents(WebView webView) {
+        for (String insidentsFuncStr:
+                incidentsFuncList) {
+            webView.removeJavascriptInterface(insidentsFuncStr);
+        }
     }
 
     private class MyWebAppInterface {
@@ -89,9 +101,67 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private enum SelectedType {
-        SECURE_INTERFACE,
-        INSECURE_INTERFACE,
-        NO_JAVASCRIPT
+        STATUS_SECURE,
+        STATUS_INSECURE,
+        STATUS_NO_JAVASCRIPT
+    }
+
+    private class MyWebViewClient extends WebViewClient {
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            dbg("(・A・)!!");
+            view.removeJavascriptInterface(interfaceName);
+            handler.cancel();
+        }
+
+        @Override
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            if (detectUnknownUrl(url, view)) {
+                //do nothing
+            } else {
+                super.onPageStarted(view, url, favicon);
+            }
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            if (detectUnknownUrl(url, view)) {
+                //do nothing
+            } else {
+                super.onPageFinished(view, url);
+            }
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if (detectUnknownUrl(request.getUrl().toString(), view)) {
+                return true;
+            } else {
+                return super.shouldOverrideUrlLoading(view, request);
+            }
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (detectUnknownUrl(url.toString(), view)) {
+                return true;
+            } else {
+                super.shouldOverrideUrlLoading(view, url);
+            }
+        }
+    }
+
+    /*
+     Guard 001: Remove Web App Interface
+     */
+    private boolean detectUnknownUrl(String urlStr, WebView webView) {
+        if (checkUrl.startsWith(urlStr)) {
+            dbg("(・A・)!!");
+            webView.removeJavascriptInterface(interfaceName);
+            return true;
+        }
+        return false;
     }
 
     /*
@@ -109,57 +179,5 @@ public class MainActivity extends AppCompatActivity {
                 .append(className).append(".").append(method).append(":").append(line)
                 .append("]");
         android.util.Log.d("AndroidWebViewExample", buf.toString());
-    }
-
-    private class MyWebViewClient extends WebViewClient {
-        @Override
-        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            dbg("(・A・)!!");
-            handler.cancel();
-        }
-
-        @Override
-        public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            super.onPageStarted(view, url, favicon);
-            removeInsidents(view);
-        }
-
-        @Override
-        public void onPageFinished(WebView view, String url) {
-            super.onPageFinished(view, url);
-            removeInsidents(view);
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            if (checkUrl(request.getUrl().toString())) {
-                return super.shouldOverrideUrlLoading(view, request);
-            } else {
-                dbg("(・A・)!!");
-                return true;
-            }
-        }
-
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            if (checkUrl(url.toString())) {
-                return super.shouldOverrideUrlLoading(view, url);
-            } else {
-                dbg("(・A・)!!");
-                return true;
-            }
-        }
-
-        private void removeInsidents(WebView webView) {
-            for (String insidentsFuncStr:
-                    incidentsFuncList) {
-                webView.removeJavascriptInterface(insidentsFuncStr);
-            }
-        }
-
-        private boolean checkUrl(String urlStr) {
-            return myRequestUrl.startsWith(urlStr);
-        }
     }
 }
