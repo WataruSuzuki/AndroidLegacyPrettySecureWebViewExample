@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
@@ -18,16 +19,16 @@ import android.webkit.WebViewClient;
 
 public class MainActivity extends AppCompatActivity {
 
-    private WebView mWebView;
     private final String myRequestUrl = "http://api.ma.la/androidwebview/";
-    private final String checkUrl = "https://www.google.co.jp";
+    private final String checkUrl = myRequestUrl;//"https://www.google.co.jp";
     private final String interfaceName = "MyWebAppInterface";
     private final String[] incidentsFuncList = {
-            "searchBoxJavaBridge_",
             "setAccessible()",
-            "ClassLoader", "getClass()", "getClassLoader()", "loadClass()",
-            "Context", "getContext()", "getApplicationContext()", "getBaseContext()"
+            "classloader","ClassLoader", "getClass", "getclass", "loadclass", "loadClass",
+            "context","Context"//, "getContext()", "getApplicationContext()", "getBaseContext()"
     };
+    private WebView mWebView;
+    private Handler mHandler = new Handler();
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -53,12 +54,29 @@ public class MainActivity extends AppCompatActivity {
 
     };
 
+    /*
+     http://yuki312.blogspot.jp/2011/11/blog-post.html
+     */
+    private static void dbg(String msg) {
+        StackTraceElement[] stack = new Throwable().getStackTrace();
+        String className = stack[1].getClassName();
+        String method = stack[1].getMethodName();
+        int line = stack[1].getLineNumber();
+        StringBuilder buf = new StringBuilder(60);
+        buf.append(msg)
+                .append("[")
+                // sample.package.ClassName.methodName:1234
+                .append(className).append(".").append(method).append(":").append(line)
+                .append("]");
+        android.util.Log.d("AndroidWebViewExample", buf.toString());
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        setupWebView(SelectedType.STATUS_SECURE);
+        setupWebView(SelectedType.STATUS_INSECURE);
     }
 
     private void setupWebView(SelectedType type) {
@@ -84,26 +102,65 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupSecureWebView() {
-        removeInsidents(mWebView);
         mWebView.setWebViewClient(new MyWebViewClient());
+//        final Handler handler = new Handler();
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                mWebView.loadUrl("javascript:window.MyWebAppInterface.viewSource(document.documentElement.outerHTML);");
+//            }
+//        }, 10000);
     }
 
-    private void removeInsidents(WebView webView) {
-        for (String insidentsFuncStr:
-                incidentsFuncList) {
-            webView.removeJavascriptInterface(insidentsFuncStr);
+    /*
+     Guard 001: Check request host is mine.
+     */
+    private boolean detectUnknownUrl(String urlStr, WebView webView) {
+        if (!checkUrl.startsWith(urlStr)) {
+            dbg("(・A・)!!");
+            webView.removeJavascriptInterface(interfaceName);
+            webView.getSettings().setJavaScriptEnabled(false);
+            return true;
         }
+        return false;
     }
 
-    private class MyWebAppInterface {
-        @JavascriptInterface
-        public void onClick() {}
+    /*
+     Guard 002: Check dangerous javascript function on html contents.
+     */
+    private void checkDangerousJavaScriptFunc(String html) {
+        for (String insidentsFuncStr :
+                incidentsFuncList) {
+            if (html.indexOf(insidentsFuncStr) >= 0) {
+                dbg("(・A・)!!");
+                mWebView.removeJavascriptInterface(interfaceName);
+                mWebView.getSettings().setJavaScriptEnabled(false);
+                break;
+            }
+        }
     }
 
     private enum SelectedType {
         STATUS_SECURE,
         STATUS_INSECURE,
         STATUS_NO_JAVASCRIPT
+    }
+
+    private class MyWebAppInterface {
+        @JavascriptInterface
+        public void onClick() {
+        }
+
+        @JavascriptInterface
+        public void viewSource(final String html) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    checkDangerousJavaScriptFunc(html);
+                }
+            });
+        }
+
     }
 
     private class MyWebViewClient extends WebViewClient {
@@ -128,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
             if (detectUnknownUrl(url, view)) {
                 //do nothing
             } else {
+                view.loadUrl("javascript:window.MyWebAppInterface.viewSource(document.documentElement.outerHTML);");
                 super.onPageFinished(view, url);
             }
         }
@@ -147,37 +205,8 @@ public class MainActivity extends AppCompatActivity {
             if (detectUnknownUrl(url.toString(), view)) {
                 return true;
             } else {
-                super.shouldOverrideUrlLoading(view, url);
+                return super.shouldOverrideUrlLoading(view, url);
             }
         }
-    }
-
-    /*
-     Guard 001: Remove Web App Interface
-     */
-    private boolean detectUnknownUrl(String urlStr, WebView webView) {
-        if (checkUrl.startsWith(urlStr)) {
-            dbg("(・A・)!!");
-            webView.removeJavascriptInterface(interfaceName);
-            return true;
-        }
-        return false;
-    }
-
-    /*
-     http://yuki312.blogspot.jp/2011/11/blog-post.html
-     */
-    private static void dbg(String msg) {
-        StackTraceElement[] stack = new Throwable().getStackTrace();
-        String className = stack[1].getClassName();
-        String method = stack[1].getMethodName();
-        int line = stack[1].getLineNumber();
-        StringBuilder buf = new StringBuilder(60);
-        buf.append(msg)
-                .append("[")
-                // sample.package.ClassName.methodName:1234
-                .append(className).append(".").append(method).append(":").append(line)
-                .append("]");
-        android.util.Log.d("AndroidWebViewExample", buf.toString());
     }
 }
