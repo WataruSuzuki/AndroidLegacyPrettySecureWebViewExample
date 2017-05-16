@@ -5,11 +5,8 @@ import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
-import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
 import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
@@ -22,37 +19,15 @@ public class MainActivity extends AppCompatActivity {
     private final String myRequestUrl = "http://api.ma.la/androidwebview/";
     private final String checkUrl = myRequestUrl;//"https://www.google.co.jp";
     private final String interfaceName = "MyWebAppInterface";
+    private final String callViewSource = "javascript:window."+ interfaceName + ".viewSource(document.documentElement.outerHTML);";
     private final String[] incidentsFuncList = {
-            "setAccessible()",
-            "classloader","ClassLoader", "getClass", "getclass", "loadclass", "loadClass",
-            "context","Context"//, "getContext()", "getApplicationContext()", "getBaseContext()"
+            "accessible", "Accessible",
+            "classloader", "ClassLoader",
+            "getClass", "getclass", "loadclass", "loadClass",
+            "context", "Context"
     };
     private WebView mWebView;
     private Handler mHandler = new Handler();
-
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
-            mWebView.loadUrl("about:blank");
-            switch (item.getItemId()) {
-                case R.id.navigation_secure:
-                    setupWebView(SelectedType.STATUS_SECURE);
-                    break;
-                case R.id.navigation_insecure:
-                    setupWebView(SelectedType.STATUS_INSECURE);
-                    break;
-                case R.id.navigation_no_javascript:
-                    setupWebView(SelectedType.STATUS_NO_JAVASCRIPT);
-                    break;
-            }
-
-            return false;
-        }
-
-    };
 
     /*
      http://yuki312.blogspot.jp/2011/11/blog-post.html
@@ -76,47 +51,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        setupWebView(SelectedType.STATUS_INSECURE);
-    }
-
-    private void setupWebView(SelectedType type) {
         mWebView = (WebView) findViewById(R.id.webview);
         mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
         mWebView.clearCache(true);
 
         mWebView.addJavascriptInterface(new MyWebAppInterface(), interfaceName);
         mWebView.getSettings().setJavaScriptEnabled(true);
-        switch (type) {
-            case STATUS_SECURE:
-                setupSecureWebView();
-                break;
 
-            case STATUS_INSECURE:
-                mWebView.setWebViewClient(null);
-                break;
-
-            default:
-                mWebView.getSettings().setJavaScriptEnabled(false);
-        }
+        mWebView.setWebViewClient(new PrettySecureWebViewClient());
         mWebView.loadUrl(myRequestUrl);
-    }
-
-    private void setupSecureWebView() {
-        mWebView.setWebViewClient(new MyWebViewClient());
-//        final Handler handler = new Handler();
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                mWebView.loadUrl("javascript:window.MyWebAppInterface.viewSource(document.documentElement.outerHTML);");
-//            }
-//        }, 10000);
     }
 
     /*
      Guard 001: Check request host is mine.
      */
     private boolean detectUnknownUrl(String urlStr, WebView webView) {
-        if (!checkUrl.startsWith(urlStr)) {
+        if (!checkUrl.equals(callViewSource) && !checkUrl.startsWith(urlStr)) {
             dbg("(・A・)!!");
             webView.removeJavascriptInterface(interfaceName);
             webView.getSettings().setJavaScriptEnabled(false);
@@ -140,17 +90,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private enum SelectedType {
-        STATUS_SECURE,
-        STATUS_INSECURE,
-        STATUS_NO_JAVASCRIPT
-    }
-
     private class MyWebAppInterface {
-        @JavascriptInterface
-        public void onClick() {
-        }
-
         @JavascriptInterface
         public void viewSource(final String html) {
             mHandler.post(new Runnable() {
@@ -160,10 +100,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-
     }
 
-    private class MyWebViewClient extends WebViewClient {
+    private class PrettySecureWebViewClient extends WebViewClient {
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             dbg("(・A・)!!");
@@ -185,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             if (detectUnknownUrl(url, view)) {
                 //do nothing
             } else {
-                view.loadUrl("javascript:window.MyWebAppInterface.viewSource(document.documentElement.outerHTML);");
+                view.loadUrl(callViewSource);
                 super.onPageFinished(view, url);
             }
         }
