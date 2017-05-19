@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">AndroidWebViewExample</string>
-    <string name="title_secure">Secure</string>
+    <string name="title_pretty_secure">PrettySecure</string>
     <string name="title_insecure">Insecure</string>
     <string name="title_no_javascript">No JS</string>
+    <string name="title_activity_example_list">ExampleListActivity</string>
 </resources>

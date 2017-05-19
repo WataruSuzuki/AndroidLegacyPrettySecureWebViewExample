@@ -14,7 +14,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-public class MainActivity extends AppCompatActivity {
+public class PrettySecureWebActivity extends AppCompatActivity {
 
     private final String myRequestUrl = "http://api.ma.la/androidwebview/";
     private final String checkUrl = myRequestUrl;//"https://www.google.co.jp";
@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.pretty_secure_web);
 
         mWebView = (WebView) findViewById(R.id.webview);
         mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
