@@ -21,10 +21,7 @@ public class PrettySecureWebActivity extends AppCompatActivity {
     private final String interfaceName = "MyWebAppInterface";
     private final String callViewSource = "javascript:window."+ interfaceName + ".viewSource(document.documentElement.outerHTML);";
     private final String[] incidentsFuncList = {
-            "accessible", "Accessible",
-            "classloader", "ClassLoader",
-            "getClass", "getclass", "loadclass", "loadClass",
-            "context", "Context"
+            "android.webkit.JniUtil", "java.lang.Runtime"
     };
     private WebView mWebView;
     private Handler mHandler = new Handler();
